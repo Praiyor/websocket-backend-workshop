@@ -1,47 +1,46 @@
-import express from 'express';
-import { WebSocketServer } from 'ws';
+import express from "express";
+import { WebSocketServer, WebSocket } from "ws";
 
-const zap = [];
+const messages = [];
 
 const app = express();
-//4520 = rbso
 const port = 4520;
 
-app.get('/', (req, res) => {
-    res.status(200).send('LIMBUS COMPANY!!!!!!!!!');
+app.get("/", (req, res) => {
+  res.status(200).send("Servidor WebSocket em execução.");
 });
 
 const server = app.listen(port, () => {
-    console.log(`Don Quixote Of La MachaLand ${port}`)
-})
+  console.log(`Servidor iniciado na porta ${port}`);
+});
 
-const robsonSocket = new WebSocketServer({server});
+const webSocketServer = new WebSocketServer({ server });
 
-robsonSocket.on('connection', (client) => {
-    console.log('Cliente se conecta ao websocket');
+webSocketServer.on("connection", (client) => {
+  console.log("Cliente conectado ao WebSocket.");
 
-    client.on('message',(message) => {
-        try {
-            zap.push(message);
-            console.log('Robson recebeu a mensagem')
+  client.on("message", (message) => {
+    try {
+      messages.push(message);
+      console.log("Mensagem recebida do cliente.");
 
-            client.send('Glory to Limbus Company!');
+      client.send("Mensagem recebida com sucesso.");
 
-            robsonSocket.clients.forEach((client) => {
-                if(client.readyState === WebSocket.OPEN) {
-                    client.send(zap);
-                }
-            });
-        } catch(error){
-            console.error('Deu ruim:', error)
+      webSocketServer.clients.forEach((connectedClient) => {
+        if (connectedClient.readyState === WebSocket.OPEN) {
+          connectedClient.send(JSON.stringify(message));
         }
-    });
+      });
+    } catch (error) {
+      console.error("Erro ao processar a mensagem:", error);
+    }
+  });
 
-    client.on('close', () => {
-        console.log('conexão fechada')
-    });
-})
+  client.on("close", () => {
+    console.log("Conexão com o cliente encerrada.");
+  });
+});
 
-robsonSocket.on('error', (error) => {
-    console.log('Robson ferro com tudo dnv: ', error)
-})
+webSocketServer.on("error", (error) => {
+  console.error("Erro no servidor WebSocket:", error);
+});
